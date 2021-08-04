@@ -59,8 +59,9 @@ services:
       - nile-kafka
   permission-adapter:
     image: 'docker.io/bitnami/minideb'
-    command: bash -c "chown -R 1001 /nile-zookeeper /nile-kafka && chmod -R 775 /nile-zookeeper /nile-kafka"
+    command: bash -c "chown -R 1001:1001 /nile-zookeeper /nile-kafka && chmod -R 775 /nile-zookeeper /nile-kafka"
     volumes:
       - './docker-volumes/nile-zookeeper:/nile-zookeeper'
       - './docker-volumes/nile-kafka:/nile-kafka'
       - './docker-volumes/nile-node:/nile-node'
+      - './docker-volumes/backup:/backup'
