@@ -1,0 +1,66 @@
+version: "2"
+
+services:
+  nile-zookeeper:
+    container_name: nile-zookeeper
+    image: "docker.io/bitnami/zookeeper:3-debian-10"
+    ports:
+      - "${ZOO_PORT_NUMBER}:${ZOO_PORT_NUMBER}"
+    restart: always
+    volumes:
+      - "./docker-volumes/nile-zookeeper:/bitnami/zookeeper"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+      - ZOO_PORT_NUMBER
+    depends_on:
+      - permission-adapter
+  nile-kafka:
+    container_name: nile-kafka
+    image: "docker.io/bitnami/kafka:2-debian-10"
+    ports:
+      - "${KAFKA_CLIENT_PORT}:${KAFKA_CLIENT_PORT}"
+      - "${KAFKA_EXTERNAL_PORT}:${KAFKA_EXTERNAL_PORT}"
+    restart: always
+    volumes:
+      - "./docker-volumes/nile-kafka:/bitnami/kafka"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS
+      - KAFKA_CFG_ADVERTISED_LISTENERS
+      - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+    depends_on:
+      - nile-zookeeper
+  nile-node:
+    container_name: nile-node
+    build:
+      context: https://github.com/pthor11/docker-java-tron.git
+      args:
+        - JAVA_TRON_VERSION
+    #image: "docker.io/sunstake/java-tron"
+    environment:
+      - NETWORK=nile
+      - VM_MAX_TIME_RATIO=20.0
+      - P2P_PORT=38888
+      - FULL_NODE_PORT
+      - SOLIDITY_NODE_PORT=8101
+      - EVENT_PLUGIN_ENABLED=true
+      - EVENT_PLUGIN_KAFKA_SERVER
+      - EVENT_PLUGIN_BLOCK_TRIGGER_ENABLED=true
+      - EVENT_PLUGIN_TRANSACTION_TRIGGER_ENABLED=true
+      - EVENT_PLUGIN_CONTRACTEVENT_TRIGGER_ENABLED=true
+    ports:
+      - "${FULL_NODE_PORT}:${FULL_NODE_PORT}"
+    restart: always
+    volumes:
+      - "./docker-volumes/nile-node:/node"
+    depends_on:
+      - nile-kafka
+  permission-adapter:
+    image: 'docker.io/bitnami/minideb'
+    command: bash -c "chown -R 1001 /nile-zookeeper /nile-kafka && chmod -R 775 /nile-zookeeper /nile-kafka"
+    volumes:
+      - './docker-volumes/nile-zookeeper:/nile-zookeeper'
+      - './docker-volumes/nile-kafka:/nile-kafka'
+      - './docker-volumes/nile-node:/nile-node'
