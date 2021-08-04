@@ -1,28 +1,28 @@
 version: "2"
 
 services:
-  nile-zookeeper:
-    container_name: nile-zookeeper
+  tron-zookeeper:
+    container_name: "${ZOOKEEPER_NAME}"
     image: "docker.io/bitnami/zookeeper:3-debian-10"
     ports:
       - "${ZOO_PORT_NUMBER}:${ZOO_PORT_NUMBER}"
     restart: always
     volumes:
-      - "./docker-volumes/nile-zookeeper:/bitnami/zookeeper"
+      - "./docker-volumes/tron-zookeeper:/bitnami/zookeeper"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_PORT_NUMBER
     depends_on:
       - permission-adapter
-  nile-kafka:
-    container_name: nile-kafka
+  tron-kafka:
+    container_name: "${KAFKA_NAME}"
     image: "docker.io/bitnami/kafka:2-debian-10"
     ports:
       - "${KAFKA_CLIENT_PORT}:${KAFKA_CLIENT_PORT}"
       - "${KAFKA_EXTERNAL_PORT}:${KAFKA_EXTERNAL_PORT}"
     restart: always
     volumes:
-      - "./docker-volumes/nile-kafka:/bitnami/kafka"
+      - "./docker-volumes/tron-kafka:/bitnami/kafka"
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT
       - ALLOW_PLAINTEXT_LISTENER=yes
@@ -31,16 +31,16 @@ services:
       - KAFKA_CFG_ADVERTISED_LISTENERS
       - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
     depends_on:
-      - nile-zookeeper
-  nile-node:
-    container_name: nile-node
+      - tron-zookeeper
+  tron-node:
+    container_name: "${NODE_NAME}"
     build:
       context: https://github.com/pthor11/docker-java-tron.git
       args:
         - JAVA_TRON_VERSION
     #image: "docker.io/sunstake/java-tron"
     environment:
-      - NETWORK=nile
+      - NETWORK
       - VM_MAX_TIME_RATIO=20.0
       - P2P_PORT=38888
       - FULL_NODE_PORT
@@ -54,14 +54,14 @@ services:
       - "${FULL_NODE_PORT}:${FULL_NODE_PORT}"
     restart: always
     volumes:
-      - "./docker-volumes/nile-node:/data"
+      - "./docker-volumes/tron-node:/data"
     depends_on:
-      - nile-kafka
+      - tron-kafka
   permission-adapter:
     image: 'docker.io/bitnami/minideb'
-    command: bash -c "chown -R 1001:1001 /nile-zookeeper /nile-kafka && chmod -R 775 /nile-zookeeper /nile-kafka"
+    command: bash -c "chown -R 1001:1001 /tron-zookeeper /tron-kafka && chmod -R 775 /tron-zookeeper /tron-kafka"
     volumes:
-      - './docker-volumes/nile-zookeeper:/nile-zookeeper'
-      - './docker-volumes/nile-kafka:/nile-kafka'
-      - './docker-volumes/nile-node:/nile-node'
+      - './docker-volumes/tron-zookeeper:/tron-zookeeper'
+      - './docker-volumes/tron-kafka:/tron-kafka'
+      - './docker-volumes/tron-node:/tron-node'
       - './docker-volumes/backup:/backup'
