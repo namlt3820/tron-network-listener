@@ -54,7 +54,7 @@ services:
       - "${FULL_NODE_PORT}:${FULL_NODE_PORT}"
     restart: always
     volumes:
-      - "./docker-volumes/nile-node:/node"
+      - "./docker-volumes/nile-node:/data"
     depends_on:
       - nile-kafka
   permission-adapter:
